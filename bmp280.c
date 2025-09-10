@@ -2,6 +2,7 @@
 #include <math.h>
 #include "driver/i2c.h"
 #include "esp_log.h"
+#include "driver/gpio.h"  // gpio_num_t tipini kullanabilmek için
 
 #define TAG "BMP280_COMPONENT"
 
@@ -138,7 +139,7 @@ esp_err_t bmp280_init(void) {
  * @param scl_io: GPIO number for SCL
  * @return ESP_OK on success, ESP_FAIL on failure
  */
-esp_err_t bmp280_init(gpio_num_t sda_io, gpio_num_t scl_io) {
+esp_err_t bmp280_init_pins(gpio_num_t sda_io, gpio_num_t scl_io) {
     // I2C master init
     i2c_config_t conf = {
         .mode = I2C_MODE_MASTER,

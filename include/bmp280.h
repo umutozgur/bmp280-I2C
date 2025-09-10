@@ -1,6 +1,6 @@
 #pragma once
 #include "esp_err.h"
-
+#include "driver/gpio.h"  // gpio_num_t tipini kullanabilmek için
 // I2C pin ve adres ayarları
 #define BMP280_I2C_ADDR 0x76
 
