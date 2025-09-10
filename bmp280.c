@@ -39,15 +39,30 @@ typedef struct {
 static bmp280_calib_t calib;
 static int32_t t_fine;
 
+/**
+ * @brief Write a single byte to BMP280 register
+ * @param reg: Register address
+ * @param val: Value to write
+ * @return ESP_OK on success, ESP_FAIL on error
+ */
 static esp_err_t i2c_write_byte(uint8_t reg, uint8_t val) {
     uint8_t data[2] = {reg, val};
     return i2c_master_write_to_device(I2C_MASTER_NUM, BMP280_I2C_ADDR, data, 2, 1000 / portTICK_PERIOD_MS);
 }
 
+/**
+ * @brief Write a single byte to BMP280 register
+ * @param reg: Register address
+ * @param val: Value to write
+ * @return ESP_OK on success, ESP_FAIL on error
+ */
 static esp_err_t i2c_read_bytes(uint8_t reg, uint8_t *buf, size_t len) {
     return i2c_master_write_read_device(I2C_MASTER_NUM, BMP280_I2C_ADDR, &reg, 1, buf, len, 1000 / portTICK_PERIOD_MS);
 }
 
+/**
+ * @brief Read BMP280 calibration data from the sensor
+ */
 static void read_calibration(void) {
     uint8_t buf[24];
     i2c_read_bytes(REG_CALIB, buf, 24);
@@ -66,6 +81,9 @@ static void read_calibration(void) {
     calib.dig_P9 = (buf[23]<<8)|buf[22];
 }
 
+/**
+ * @brief Read BMP280 calibration data from the sensor
+ */
 static float compensate_temp(int32_t adc_T) {
     int32_t var1 = ((((adc_T>>3) - ((int32_t)calib.dig_T1 <<1))) * ((int32_t)calib.dig_T2)) >> 11;
     int32_t var2 = (((((adc_T>>4) - ((int32_t)calib.dig_T1)) * ((adc_T>>4) - ((int32_t)calib.dig_T1))) >> 12) * ((int32_t)calib.dig_T3)) >> 14;
@@ -74,6 +92,11 @@ static float compensate_temp(int32_t adc_T) {
     return T / 100.0f;
 }
 
+/**
+ * @brief Compensate raw pressure reading from BMP280
+ * @param adc_P: Raw pressure value from sensor
+ * @return Pressure in hPa
+ */
 static float compensate_press(int32_t adc_P) {
     int64_t var1, var2, p;
     var1 = ((int64_t)t_fine) - 128000;
@@ -91,16 +114,30 @@ static float compensate_press(int32_t adc_P) {
     return p / 25600.0f;
 }
 
+/**
+ * @brief Calculate altitude from pressure using the barometric formula
+ * @param pressure_hpa: Pressure in hPa
+ * @return Altitude in meters
+ */
 static float calc_altitude(float pressure_hpa) {
     return 44330.0f * (1.0f - powf(pressure_hpa / SEA_LEVEL_PRESSURE, 0.1903f));
 }
 
+
+/**
+ * @brief Initialize BMP280 with default I2C pins (SDA=21, SCL=22)
+ * @return ESP_OK on success, ESP_FAIL on failure
+ */
 esp_err_t bmp280_init(void) {
     return bmp280_init_pins(GPIO_NUM_21, GPIO_NUM_22); // default SDA/SCL
 }
 
-
-
+/**
+ * @brief Initialize BMP280 with custom I2C pins
+ * @param sda_io: GPIO number for SDA
+ * @param scl_io: GPIO number for SCL
+ * @return ESP_OK on success, ESP_FAIL on failure
+ */
 esp_err_t bmp280_init(gpio_num_t sda_io, gpio_num_t scl_io) {
     // I2C master init
     i2c_config_t conf = {
@@ -126,6 +163,11 @@ esp_err_t bmp280_init(gpio_num_t sda_io, gpio_num_t scl_io) {
     return i2c_write_byte(REG_CTRL_MEAS, ctrl_meas);
 }
 
+/**
+ * @brief Read temperature, pressure and calculate altitude
+ * @param data: Pointer to bmp280_data_t struct to store results
+ * @return ESP_OK on success, ESP_FAIL on error
+ */
 esp_err_t bmp280_read(bmp280_data_t *data) {
     uint8_t buf[6];
     if (i2c_read_bytes(REG_PRESS_MSB, buf, 6) != ESP_OK) return ESP_FAIL;
