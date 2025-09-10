@@ -1,0 +1,9 @@
+# Build and IDF files
+/build/
+/sdkconfig
+/.vscode/
+*.pio
+*.elf
+*.bin
+*.map
+*.log
