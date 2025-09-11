@@ -6,7 +6,7 @@
 
 #define TAG "BMP280_COMPONENT"
 
-// I2C ayarları
+// I2C ayarları / deneme
 #define I2C_MASTER_NUM 0
 #define I2C_MASTER_SDA_IO 21
 #define I2C_MASTER_SCL_IO 22
