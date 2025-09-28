@@ -6,7 +6,7 @@
 
 #define TAG "BMP280_COMPONENT"
 
-// I2C ayarları
+// I2C ayarları / deneme
 #define I2C_MASTER_NUM 0
 #define I2C_MASTER_SDA_IO 21
 #define I2C_MASTER_SCL_IO 22
@@ -127,10 +127,20 @@ static float calc_altitude(float pressure_hpa) {
 
 /**
  * @brief Initialize BMP280 with default I2C pins (SDA=21, SCL=22)
+ * @brief ESP32 then Initialize BMP280 with default I2C pins (SDA=4, SCL=5)
+ * @brief ESP32-c3 then Initialize BMP280 with default I2C pins (SDA=8, SCL=9+)
  * @return ESP_OK on success, ESP_FAIL on failure
  */
 esp_err_t bmp280_init(void) {
-    return bmp280_init_pins(GPIO_NUM_21, GPIO_NUM_22); // default SDA/SCL
+#if CONFIG_IDF_TARGET_ESP32
+    return bmp280_init_pins(GPIO_NUM_21, GPIO_NUM_22);  // DevKit v1 default
+#elif CONFIG_IDF_TARGET_ESP32C3
+    return bmp280_init_pins(GPIO_NUM_6, GPIO_NUM_7);    // C3 için uygun SDA/SCL seç
+#elif CONFIG_IDF_TARGET_ESP32S3
+    return bmp280_init_pins(GPIO_NUM_8, GPIO_NUM_9);    // S3 için örnek pinler
+#else
+    #error "Bu hedef için default I2C pinleri tanımlanmadı!"
+#endif
 }
 
 /**
@@ -152,7 +162,7 @@ esp_err_t bmp280_init_pins(gpio_num_t sda_io, gpio_num_t scl_io) {
     i2c_param_config(I2C_MASTER_NUM, &conf);
     i2c_driver_install(I2C_MASTER_NUM, conf.mode, 0, 0, 0);
 
-    // Chip ID kontrol
+    // Chip ID kontrolmac oss
     uint8_t id;
     if (i2c_read_bytes(REG_ID, &id, 1) != ESP_OK) return ESP_FAIL;
     if (id != 0x58 && id != 0x60) return ESP_FAIL;
